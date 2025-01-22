@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  matricNo  String?  // Optional for STUDENT only
+  role      Role     @default(STUDENT)
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  results   Result[] @relation("UserResults")
+  courses   CourseEnrollment[]
+}
+
+model Faculty {
+  id         String       @id @default(uuid())
+  name       String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  departments Department[]
+}
+
+model Department {
+  id         String       @id @default(uuid())
+  name       String
+  level      Level
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  faculty    Faculty       @relation(fields: [facultyId], references: [id])
+  facultyId  String
+  courses    Course[]
+  lecturers  Lecturer[]
+}
+
+model Course {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  courseCode  String
+  level       Level
+  unit        Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  department  Department  @relation(fields: [departmentId], references: [id])
+  departmentId String
+  result     Result[] @relation("RESULT")
+  enrollments CourseEnrollment[]
+}
+
+model CourseEnrollment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  course    Course   @relation(fields: [courseId], references: [id])
+  courseId  String
+}
+
+model Result {
+  id        String    @id @default(uuid())
+  grade     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation("UserResults", fields: [userId], references: [id])
+  userId    String
+  course    Course    @relation("RESULT",fields: [courseId], references: [id])
+  courseId  String
+  lecturer  Lecturer  @relation(fields: [lecturerId], references: [id])
+  lecturerId String
+}
+
+model Lecturer {
+  id         String       @id @default(uuid())
+  name       String
+  email      String       @unique
+  password   String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  departments Department[]
+  results    Result[]
+}
+
+// Enums
+enum Role {
+  ADMIN
+  STUDENT
+  LECTURER
+}
+
+enum Level {
+  ND1
+  ND2
+  HND1
+  HND2
+}
